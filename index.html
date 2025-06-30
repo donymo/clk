@@ -66,12 +66,8 @@
             justify-content: center;
             box-sizing: border-box;
         }
-        .data {
-            font-size: 5vw;
-            margin: 15px 0;
-        }
         .time {
-            font-size: 7.5vw;
+            font-size: 300px;
             margin: 15px 0;
         }
         .price-container {
@@ -81,15 +77,16 @@
             margin: 15px 0;
         }
         .price-container .data {
+            font-size: 180px;
             flex: 1;
             margin: 0 10px;
         }
         @media (max-width: 600px) {
-            .data {
-                font-size: 8vw;
-            }
             .time {
-                font-size: 12vw;
+                font-size: 100px;
+            }
+            .price-container .data {
+                font-size: 60px;
             }
             .container {
                 padding: 10px;
@@ -105,7 +102,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="data time" id="time">Loading...</div>
+        <div class="time" id="time">Loading...</div>
         <div class="price-container">
             <div class="data" id="bitcoin">Loading...</div>
             <div class="data" id="mstr">Loading...</div>
@@ -124,8 +121,8 @@
             const timeString = now.toLocaleString('en-US', { 
                 hour: 'numeric', 
                 minute: '2-digit', 
-                hour12: false 
-            });
+                hour12: true 
+            }).replace(/\s*(AM|PM)/i, '');
             document.getElementById('time').textContent = timeString;
         }
         setInterval(updateTime, 60000);
