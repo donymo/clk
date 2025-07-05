@@ -104,10 +104,10 @@
 </head>
 <body>
     <div class="container">
-        <div class="time" id="time">Loading...</div>
+        <div class="time" id="time">0</div>
         <div class="price-container">
-            <div class="data" id="bitcoin">Loading...</div>
-            <div class="data" id="mstr">Loading...</div>
+            <div class="data" id="bitcoin">0</div>
+            <div class="data" id="mstr">0</div>
         </div>
     </div>
 
@@ -117,7 +117,7 @@
         let lastMSTRPrice = null;
         let lastMSTRPreviousClose = null;
 
-        // Update current time every minute
+        // Update current time
         function updateTime() {
             const now = new Date();
             const timeString = now.toLocaleString('en-US', { 
@@ -126,9 +126,8 @@
                 hour12: true 
             }).replace(/\s*(AM|PM)/i, '');
             document.getElementById('time').textContent = timeString;
+            console.log('Time updated:', timeString); // Debug log
         }
-        setInterval(updateTime, 60000);
-        updateTime();
 
         // Fetch Bitcoin price from CoinGecko
         async function fetchBitcoinPrice() {
@@ -139,6 +138,7 @@
                 const abbreviatedPrice = Math.ceil(data.bitcoin.usd / 1000);
                 lastBitcoinPrice = abbreviatedPrice;
                 document.getElementById('bitcoin').textContent = abbreviatedPrice;
+                console.log('Bitcoin price updated:', abbreviatedPrice); // Debug log
             } catch (error) {
                 document.getElementById('bitcoin').textContent = lastBitcoinPrice || 'N/A';
                 console.error('Bitcoin fetch error:', error);
@@ -158,37 +158,35 @@
                 lastMSTRPrice = price;
                 lastMSTRPreviousClose = Math.round(parseFloat(data['Global Quote']['08. previous close']));
                 document.getElementById('mstr').textContent = price;
+                console.log('MSTR price updated:', price); // Debug log
             } catch (error) {
                 document.getElementById('mstr').textContent = lastMSTRPrice || lastMSTRPreviousClose || 'N/A';
                 console.error('MSTR fetch error:', error);
             }
         }
 
-        // Schedule MSTR price fetch every 15 minutes starting at 9:45 AM
-        function scheduleMSTRPriceFetch() {
+        // Check if current minute is :15, :30, :45, or :00
+        function shouldUpdatePrices() {
             const now = new Date();
-            const today945AM = new Date(now);
-            today945AM.setHours(9, 45, 0, 0);
-
-            // If past 9:45 AM today, set to next 15-minute interval
-            let nextFetch = today945AM;
-            if (now > today945AM) {
-                const minutesSince945 = Math.floor((now - today945AM) / (1000 * 60));
-                const nextInterval = Math.ceil(minutesSince945 / 15) * 15;
-                nextFetch = new Date(today945AM.getTime() + nextInterval * 60 * 1000);
-            }
-
-            const msUntilNextFetch = nextFetch - now;
-            setTimeout(() => {
-                fetchMSTRPrice();
-                setInterval(fetchMSTRPrice, 15 * 60 * 1000); // Every 15 minutes
-            }, msUntilNextFetch);
+            const minutes = now.getMinutes();
+            return minutes === 15 || minutes === 30 || minutes === 45 || minutes === 0;
         }
 
-        // Initial fetches and schedules
-        fetchBitcoinPrice();
-        scheduleMSTRPriceFetch();
-        setInterval(fetchBitcoinPrice, 60000);
+        // Update all data
+        async function updateAll() {
+            updateTime();
+            if (shouldUpdatePrices()) {
+                await Promise.all([fetchBitcoinPrice(), fetchMSTRPrice()]);
+            }
+            // Force full page reload every 30 seconds
+            setTimeout(() => {
+                location.reload();
+            }, 30000 - (Date.now() % 30000)); // Align to next 30-second interval
+        }
+
+        // Initial update and schedule every 30 seconds
+        updateAll();
+        setInterval(updateAll, 30000);
     </script>
 </body>
 </html>
